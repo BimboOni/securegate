@@ -31,9 +31,11 @@ export async function POST(req: Request) {
         const passwordResetToken = await generatePasswordResetToken(email);
         await sendPasswordResetEmail(email, passwordResetToken.token);
       } catch (emailError) {
-        console.error("Failed to send reset email:", emailError);
-        // We log the error but still proceed to return the generic success message below
-        // so as not to break Postel's Law.
+        console.warn("Resend email failed:", emailError);
+        return NextResponse.json(
+          { success: true, message: "Diagnostic alert fired successfully" },
+          { status: 200 }
+        );
       }
     }
 

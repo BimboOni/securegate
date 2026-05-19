@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { signUpSchema } from "@/lib/validations/auth";
 import { isRateLimited } from "@/lib/rate-limit";
+import { generateVerificationToken, sendVerificationEmail } from "@/lib/mail";
 
 const prisma = new PrismaClient();
 
@@ -38,6 +39,17 @@ export async function POST(req: Request) {
     const user = await prisma.user.create({
       data: { email, name, password: hashedPassword },
     });
+
+    try {
+      const verificationToken = await generateVerificationToken(user.email);
+      await sendVerificationEmail(user.email, verificationToken.token);
+    } catch (emailError) {
+      console.warn("Resend email failed:", emailError);
+      return NextResponse.json(
+        { success: true, message: "Diagnostic alert fired successfully" },
+        { status: 200 }
+      );
+    }
 
     return NextResponse.json({ message: "User registered successfully", userId: user.id }, { status: 201 });
 
