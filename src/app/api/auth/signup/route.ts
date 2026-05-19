@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { signUpSchema } from "@/lib/validations/auth";
+import { generateVerificationToken, sendVerificationEmail } from "@/lib/mail";
 
 const prisma = new PrismaClient();
 
@@ -46,8 +47,12 @@ export async function POST(req: Request) {
       },
     });
 
+    // 5. Generate token and send verification email
+    const verificationToken = await generateVerificationToken(user.email);
+    await sendVerificationEmail(user.email, verificationToken.token);
+
     return NextResponse.json(
-      { message: "User registered successfully", userId: user.id }, 
+      { message: "User registered successfully. Please verify your email.", userId: user.id }, 
       { status: 201 }
     );
   } catch (error) {
