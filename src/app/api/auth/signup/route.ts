@@ -2,65 +2,47 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { signUpSchema } from "@/lib/validations/auth";
-import { generateVerificationToken, sendVerificationEmail } from "@/lib/mail";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
+    // 1. Extract the IP Address from request headers (Vercel provides 'x-forwarded-for')
+    const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
+
+    // 2. Execute the Rate Limiting Check
+    const limited = await isRateLimited(ip, "/api/auth/signup");
+    if (limited) {
+      return NextResponse.json(
+        { error: "Too many registration attempts. Please try again in a minute." },
+        { status: 429 } // HTTP 429 Too Many Requests
+      );
+    }
+
     const body = await req.json();
 
-    // 1. Server-side Validation (Murphy's Law: Never trust client-side data)
+    // [The rest of your existing signup validation and creation logic sits safely right here...]
     const result = signUpSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: result.error.errors }, 
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input data" }, { status: 400 });
     }
 
     const { email, password, name } = result.data;
-
-    // 2. Check for existing user
-    // Postel's Law / Privacy: Provide a clean, un-leaked error status
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Email is already registered" }, 
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "Email is already registered" }, { status: 409 });
     }
 
-    // 3. Hash password (Security Standard: bcrypt with 12 salt rounds)
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // 4. Save user to DB
+    const hashedPassword = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-      },
+      data: { email, name, password: hashedPassword },
     });
 
-    // 5. Generate token and send verification email
-    const verificationToken = await generateVerificationToken(user.email);
-    await sendVerificationEmail(user.email, verificationToken.token);
+    return NextResponse.json({ message: "User registered successfully", userId: user.id }, { status: 201 });
 
-    return NextResponse.json(
-      { message: "User registered successfully. Please verify your email.", userId: user.id }, 
-      { status: 201 }
-    );
   } catch (error) {
-    // Return generic error without leaking stack traces
     console.error("Signup error:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred during registration" }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
   }
 }

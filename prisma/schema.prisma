@@ -35,3 +35,12 @@ model PasswordResetToken {
   @@unique([email, token])
   @@map("password_reset_tokens")
 }
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  ip        String
+  route     String
+  timestamp DateTime @default(now())
+
+  @@index([ip, route, timestamp])
+}
