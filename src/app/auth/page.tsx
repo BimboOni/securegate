@@ -28,7 +28,6 @@ interface FormShared {
   onFieldChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFieldBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
   onTogglePassword: () => void;
-  inputClass: (field: keyof FieldErrors, extra?: string) => string;
   emailInputClass: (field: keyof FieldErrors, extra?: string) => string;
 }
 
@@ -41,10 +40,10 @@ const PASSWORD_REQUIREMENTS = [
 ];
 
 function PasswordInput({
-  value, showPassword, onToggle, fieldError, className, onChange, onBlur
+  value, showPassword, onToggle, className, onChange, onBlur
 }: {
   value: string; showPassword: boolean; onToggle: () => void;
-  fieldError: string; className: string;
+  className: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
 }) {
@@ -70,7 +69,7 @@ function PasswordInput({
 }
 
 function LoginForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: React.FormEvent) => void }) {
-  const { formData, fieldErrors, submitted, inputClass, emailInputClass, onFieldChange, onFieldBlur } = shared;
+  const { formData, fieldErrors, submitted, emailInputClass, onFieldChange, onFieldBlur } = shared;
   return (
     <form className="space-y-5" onSubmit={onSubmit} noValidate>
       <div>
@@ -80,7 +79,7 @@ function LoginForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: Rea
       </div>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter password</label>
-        <PasswordInput value={formData.password} showPassword={shared.showPassword} onToggle={shared.onTogglePassword} fieldError={fieldErrors.password} className={shared.inputClass("password")} onChange={shared.onFieldChange} onBlur={shared.onFieldBlur} />
+        <PasswordInput value={formData.password} showPassword={shared.showPassword} onToggle={shared.onTogglePassword} className={shared.emailInputClass("password")} onChange={shared.onFieldChange} onBlur={shared.onFieldBlur} />
         {submitted && fieldErrors.password && <p className="text-xs text-rose-400 mt-2 transition-all duration-200">{fieldErrors.password}</p>}
       </div>
       <button type="submit" disabled={shared.loading} className="w-full flex justify-center py-3.5 px-6 border border-transparent rounded-xl shadow-lg shadow-blue-500/5 text-sm bg-zinc-100 text-zinc-950 font-semibold hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 cursor-pointer active:scale-[0.98]">
@@ -91,14 +90,14 @@ function LoginForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: Rea
 }
 
 function RegisterForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: React.FormEvent) => void }) {
-  const { formData, fieldErrors, submitted, inputClass, emailInputClass, onFieldChange, onFieldBlur } = shared;
+  const { formData, fieldErrors, submitted, emailInputClass, onFieldChange, onFieldBlur } = shared;
   const unmet = PASSWORD_REQUIREMENTS.filter((r) => !r.test(formData.password));
   const visibleReq = formData.password && unmet.length > 0 ? unmet[0] : null;
   return (
     <form className="space-y-5" onSubmit={onSubmit} noValidate>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter full name</label>
-        <input ref={shared.nameRef} autoFocus type="text" name="name" placeholder="Full name" required className={inputClass("name")} value={formData.name} onBlur={onFieldBlur} onChange={onFieldChange} />
+        <input ref={shared.nameRef} autoFocus type="text" name="name" placeholder="Full name" required className={emailInputClass("name")} value={formData.name} onBlur={onFieldBlur} onChange={onFieldChange} />
         {submitted && fieldErrors.name && <p className="text-xs text-rose-400 mt-2 transition-all duration-200">{fieldErrors.name}</p>}
       </div>
       <div>
@@ -108,7 +107,7 @@ function RegisterForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: 
       </div>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter password</label>
-        <PasswordInput value={formData.password} showPassword={shared.showPassword} onToggle={shared.onTogglePassword} fieldError={fieldErrors.password} className={shared.inputClass("password")} onChange={shared.onFieldChange} onBlur={shared.onFieldBlur} />
+        <PasswordInput value={formData.password} showPassword={shared.showPassword} onToggle={shared.onTogglePassword} className={shared.emailInputClass("password")} onChange={shared.onFieldChange} onBlur={shared.onFieldBlur} />
         {formData.password && visibleReq && <p className="text-xs text-zinc-400 mt-3 transition-all duration-200">{visibleReq.label}</p>}
         {submitted && fieldErrors.password && <p className="text-xs text-rose-400 mt-2 transition-all duration-200">{fieldErrors.password}</p>}
       </div>
@@ -119,10 +118,10 @@ function RegisterForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: 
   );
 }
 
-function ForgotPasswordForm({ shared, onBack }: { shared: FormShared; onBack: () => void }) {
+function ForgotPasswordForm({ shared, onSubmit, onBack }: { shared: FormShared; onSubmit: (e: React.FormEvent) => void; onBack: () => void }) {
   const { formData, fieldErrors, submitted, emailInputClass, onFieldChange, onFieldBlur } = shared;
   return (
-    <form className="space-y-5" onSubmit={(e) => e.preventDefault()} noValidate>
+    <form className="space-y-5" onSubmit={onSubmit} noValidate>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter email</label>
         <input type="email" name="email" placeholder="Email address" required className={emailInputClass("email")} value={formData.email} onBlur={onFieldBlur} onChange={onFieldChange} />
@@ -149,7 +148,6 @@ function AuthContent() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({ name: "", email: "", password: "" });
   const [forgotStatus, setForgotStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [forgotMessage, setForgotMessage] = useState("");
-  const [redirecting, setRedirecting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -251,12 +249,11 @@ function AuthContent() {
         const errorMap: Record<string, string> = { CredentialsSignin: "Invalid email or password. Please try again." };
         setError(errorMap[res.error] || "Authentication failed. Please check your credentials.");
       } else {
-        setRedirecting(true);
         await new Promise((r) => setTimeout(r, 500));
         router.push("/dashboard"); router.refresh();
       }
     } catch { setError("An unexpected error occurred");
-    } finally { setLoading(false); setRedirecting(false); }
+    } finally { setLoading(false); }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -288,14 +285,13 @@ function AuthContent() {
 
   const inputBaseClass = "appearance-none block w-full px-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-transparent text-sm transition-all duration-500 hover:border-blue-500/40 hover:duration-[400ms]";
   const inputErrorClass = (field: keyof FieldErrors) => fieldErrors[field] ? "border-rose-500/40 focus:ring-rose-500/20" : "";
-  const inputClass = (field: keyof FieldErrors, extra = "") => `${inputBaseClass} ${inputErrorClass(field)} ${extra}`;
   const emailInputClass = (field: keyof FieldErrors, extra = "") => `${inputBaseClass} ${inputErrorClass(field)} ${extra}`;
 
   const shared: FormShared = {
     formData, fieldErrors, submitted, loading, showPassword, nameRef,
     onFieldChange: handleFieldChange, onFieldBlur: handleFieldBlur,
     onTogglePassword: () => setShowPassword((p) => !p),
-    inputClass, emailInputClass,
+    emailInputClass,
   };
 
   const formError = error || (view === "forgot" && forgotStatus === "error" ? forgotMessage : "");
@@ -326,7 +322,7 @@ function AuthContent() {
 
           {view === "login" && <LoginForm shared={shared} onSubmit={handleLogin} />}
           {view === "register" && <RegisterForm shared={shared} onSubmit={handleRegister} />}
-          {view === "forgot" && <ForgotPasswordForm shared={shared} onBack={() => switchView("login")} />}
+          {view === "forgot" && <ForgotPasswordForm shared={shared} onSubmit={handleForgotPassword} onBack={() => switchView("login")} />}
 
           {/* View switcher links */}
           {view === "login" && (
