@@ -152,7 +152,6 @@ function AuthContent() {
   const [forgotStatus, setForgotStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [forgotMessage, setForgotMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [resending, setResending] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
