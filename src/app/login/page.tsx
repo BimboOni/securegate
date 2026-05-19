@@ -29,7 +29,7 @@ export default function LoginPage() {
         router.push("/dashboard");
         router.refresh(); // Refresh the Server Component to grab the new session
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -50,7 +50,7 @@ export default function LoginPage() {
                 <p className="text-sm text-red-700 font-medium">{error}</p>
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-zinc-700">Email address</label>
               <div className="mt-1">
@@ -97,7 +97,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-zinc-500">Don't have an account? </span>
+            <span className="text-zinc-500">Don&apos;t have an account? </span>
             <Link href="/register" className="font-medium text-zinc-900 hover:text-zinc-600 transition-colors">
               Sign up
             </Link>

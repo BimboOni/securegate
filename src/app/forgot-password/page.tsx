@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
         setStatus("success");
         setMessage(data.message);
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setMessage("An unexpected error occurred");
     }
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
                   <p className="text-sm text-red-700 font-medium">{message}</p>
                 </div>
               )}
-              
+
               <div>
                 <label className="block text-sm font-medium text-zinc-700">Email address</label>
                 <div className="mt-1">
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
                   {status === "loading" ? "Sending link..." : "Send reset link"}
                 </button>
               </div>
-              
+
               <div className="text-center text-sm pt-2">
                 <Link href="/login" className="font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
                   Back to sign in

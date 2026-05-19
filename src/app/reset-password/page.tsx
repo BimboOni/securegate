@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -43,7 +42,7 @@ function ResetPasswordForm() {
           router.push("/login");
         }, 3000);
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setMessage("An unexpected error occurred");
     }
@@ -68,7 +67,7 @@ function ResetPasswordForm() {
               <p className="text-sm text-red-700 font-medium">{message}</p>
             </div>
           )}
-          
+
           <div>
             <label className="block text-sm font-medium text-zinc-700">New Password</label>
             <div className="mt-1">

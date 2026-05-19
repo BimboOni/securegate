@@ -41,7 +41,7 @@ export default function RegisterPage() {
       } else {
         router.push("/login?registered=true");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ export default function RegisterPage() {
                 <p className="text-sm text-red-700 font-medium">{error}</p>
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-zinc-700">Name</label>
               <div className="mt-1">
