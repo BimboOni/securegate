@@ -59,7 +59,7 @@ export async function generatePasswordResetToken(email: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  const resetLink = `${process.env.NEXTAUTH_URL}/api/auth/reset-password?token=${token}`;
+  const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
   await resend.emails.send({
     from: "onboarding@resend.dev", // Note: Replace with actual domain in production
