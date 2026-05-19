@@ -13,11 +13,10 @@ export async function POST(req: Request) {
     const result = resetPasswordSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid input data", details: result.error.errors },
+        { error: "Invalid input data", details: result.error.issues },
         { status: 400 }
       );
     }
-
     const { token, password } = result.data;
 
     // 2. Verify token existence
