@@ -36,3 +36,36 @@ export async function sendVerificationEmail(email: string, token: string) {
     html: `<p>Click <a href="${confirmLink}">here</a> to verify your email.</p>`
   });
 }
+
+export async function generatePasswordResetToken(email: string) {
+  const token = crypto.randomBytes(32).toString("hex");
+  // Expiration of exactly 1 hour from now
+  const expires = new Date(new Date().getTime() + 1 * 60 * 60 * 1000);
+
+  // Delete previously issued reset tokens for this email
+  await prisma.passwordResetToken.deleteMany({
+    where: { email }
+  });
+
+  const passwordResetToken = await prisma.passwordResetToken.create({
+    data: {
+      email,
+      token,
+      expires
+    }
+  });
+
+  return passwordResetToken;
+}
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetLink = `${process.env.NEXTAUTH_URL}/api/auth/reset-password?token=${token}`;
+
+  await resend.emails.send({
+    from: "onboarding@resend.dev", // Note: Replace with actual domain in production
+    to: email,
+    subject: "Reset your password - SecureGate",
+    html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`
+  });
+}
+
