@@ -9,30 +9,26 @@ const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
-    // 1. Extract the IP Address from request headers (Vercel provides 'x-forwarded-for')
     const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
-
-    // 2. Execute the Rate Limiting Check
     const limited = await isRateLimited(ip, "/api/auth/signup");
     if (limited) {
       return NextResponse.json(
-        { error: "Too many registration attempts. Please try again in a minute." },
-        { status: 429 } // HTTP 429 Too Many Requests
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
       );
     }
 
     const body = await req.json();
 
-    // [The rest of your existing signup validation and creation logic sits safely right here...]
     const result = signUpSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json({ error: "Invalid input data" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
     const { email, password, name } = result.data;
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return NextResponse.json({ error: "Email is already registered" }, { status: 409 });
+      return NextResponse.json({ error: "Registration failed" }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -44,14 +40,10 @@ export async function POST(req: Request) {
       const verificationToken = await generateVerificationToken(user.email);
       await sendVerificationEmail(user.email, verificationToken.token);
     } catch (emailError) {
-      console.warn("Resend email failed:", emailError);
-      return NextResponse.json(
-        { success: true, message: "Diagnostic alert fired successfully" },
-        { status: 200 }
-      );
+      console.warn("Verification email failed:", emailError);
     }
 
-    return NextResponse.json({ message: "User registered successfully", userId: user.id }, { status: 201 });
+    return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
 
   } catch (error) {
     console.error("Signup error:", error);

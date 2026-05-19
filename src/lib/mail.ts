@@ -3,12 +3,12 @@ import crypto from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const resend = new Resend(process.env.RESEND_API_KEY || 're_6pEapAQ5_8nAE...');
+const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 export async function generateVerificationToken(email: string) {
   const token = crypto.randomBytes(32).toString("hex");
-  // Expiration of exactly 24 hours from now
-  const expires = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+  // Expiration of exactly 15 minutes from now
+  const expires = new Date(new Date().getTime() + 15 * 60 * 1000);
 
   // Delete previously issued tokens for this email to keep DB tidy
   await prisma.verificationToken.deleteMany({

@@ -2,45 +2,43 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { forgotPasswordSchema } from "@/lib/validations/auth";
 import { generatePasswordResetToken, sendPasswordResetEmail } from "@/lib/mail";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
+    const limited = await isRateLimited(ip, "/api/auth/forgot-password");
+    if (limited) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
 
-    // 1. Validate the input (Murphy's Law: Don't trust client inputs)
     const result = forgotPasswordSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Invalid email address", details: result.error.issues },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
     const { email } = result.data;
 
-    // 2. Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      // 3. Trigger token generation and dispatch email inside a defensive block
       try {
         const passwordResetToken = await generatePasswordResetToken(email);
         await sendPasswordResetEmail(email, passwordResetToken.token);
       } catch (emailError) {
-        console.warn("Resend email failed:", emailError);
-        return NextResponse.json(
-          { success: true, message: "Diagnostic alert fired successfully" },
-          { status: 200 }
-        );
+        console.warn("Password reset email failed:", emailError);
       }
     }
 
-    // 4. Postel's Law / Privacy: Always return a successful 200 message regardless of whether
-    // the email exists. This prevents attackers from enumerating valid email addresses in the system.
     return NextResponse.json(
       { message: "If that email is in our system, we have sent a password reset link." },
       { status: 200 }

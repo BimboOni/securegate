@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     // 1. Validate the input (Murphy's Law: Always validate inputs on the server)
     const result = resetPasswordSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Invalid input data", details: result.error.issues },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     const { token, password } = result.data;
 
@@ -39,7 +36,7 @@ export async function POST(req: Request) {
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
     // 4. Hash the new password with exactly 12 salt rounds (Kerckhoffs's Principle)

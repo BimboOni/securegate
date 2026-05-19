@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     });
 
     if (!existingUser) {
-      return NextResponse.json({ error: "Email does not exist" }, { status: 404 });
+      return NextResponse.json({ error: "Verification failed" }, { status: 400 });
     }
 
     // Update the emailVerified column on the user table

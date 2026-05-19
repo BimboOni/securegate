@@ -12,6 +12,10 @@ export default async function DashboardPage() {
     redirect("/auth");
   }
 
+  if (!session.user?.emailVerified) {
+    redirect("/auth?unverified=true");
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-zinc-200 transition-colors duration-300">
       {/* Nav */}

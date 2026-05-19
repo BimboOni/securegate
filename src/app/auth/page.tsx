@@ -68,10 +68,10 @@ function PasswordInput({
   );
 }
 
-function LoginForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: React.FormEvent) => void }) {
+function LoginForm({ shared, onSubmit, onForgotPassword }: { shared: FormShared; onSubmit: (e: React.FormEvent) => void; onForgotPassword: () => void }) {
   const { formData, fieldErrors, submitted, emailInputClass, onFieldChange, onFieldBlur } = shared;
   return (
-    <form className="space-y-5" onSubmit={onSubmit} noValidate>
+    <form className="space-y-6" onSubmit={onSubmit} noValidate>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter email</label>
         <input type="email" name="email" placeholder="Email address" required className={emailInputClass("email")} value={formData.email} onBlur={onFieldBlur} onChange={onFieldChange} />
@@ -81,6 +81,9 @@ function LoginForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: Rea
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter password</label>
         <PasswordInput value={formData.password} showPassword={shared.showPassword} onToggle={shared.onTogglePassword} className={shared.emailInputClass("password")} onChange={shared.onFieldChange} onBlur={shared.onFieldBlur} />
         {submitted && fieldErrors.password && <p className="text-xs text-rose-400 mt-2 transition-all duration-200">{fieldErrors.password}</p>}
+        <div className="w-full flex justify-end mt-2">
+          <button type="button" onClick={onForgotPassword} className="text-xs text-zinc-400 hover:text-blue-400 transition-colors cursor-pointer">Forgot password?</button>
+        </div>
       </div>
       <button type="submit" disabled={shared.loading} className="w-full flex justify-center py-3.5 px-6 border border-transparent rounded-xl shadow-lg shadow-blue-500/5 text-sm bg-zinc-100 text-zinc-950 font-semibold hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 cursor-pointer active:scale-[0.98]">
         Continue
@@ -94,7 +97,7 @@ function RegisterForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: 
   const unmet = PASSWORD_REQUIREMENTS.filter((r) => !r.test(formData.password));
   const visibleReq = formData.password && unmet.length > 0 ? unmet[0] : null;
   return (
-    <form className="space-y-5" onSubmit={onSubmit} noValidate>
+    <form className="space-y-6" onSubmit={onSubmit} noValidate>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter full name</label>
         <input ref={shared.nameRef} autoFocus type="text" name="name" placeholder="Full name" required className={emailInputClass("name")} value={formData.name} onBlur={onFieldBlur} onChange={onFieldChange} />
@@ -121,7 +124,7 @@ function RegisterForm({ shared, onSubmit }: { shared: FormShared; onSubmit: (e: 
 function ForgotPasswordForm({ shared, onSubmit, onBack }: { shared: FormShared; onSubmit: (e: React.FormEvent) => void; onBack: () => void }) {
   const { formData, fieldErrors, submitted, emailInputClass, onFieldChange, onFieldBlur } = shared;
   return (
-    <form className="space-y-5" onSubmit={onSubmit} noValidate>
+    <form className="space-y-6" onSubmit={onSubmit} noValidate>
       <div>
         <label className="block text-sm font-medium text-zinc-300 mb-1.5">Enter email</label>
         <input type="email" name="email" placeholder="Email address" required className={emailInputClass("email")} value={formData.email} onBlur={onFieldBlur} onChange={onFieldChange} />
@@ -149,12 +152,18 @@ function AuthContent() {
   const [forgotStatus, setForgotStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [forgotMessage, setForgotMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resending, setResending] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const v = searchParams.get("view");
     if (v === "register" || v === "login" || v === "forgot") setView(v);
     if (searchParams.get("registered") === "true") setView("login");
+    if (searchParams.get("unverified") === "true") {
+      setView("login");
+      setError("Please verify your email before accessing the dashboard.");
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -315,26 +324,52 @@ function AuthContent() {
       ) : (
         <div>
           {formError && (
-            <div className="bg-rose-500/5 border border-rose-500/15 px-4 py-3 rounded-xl mb-5">
-              <p className="text-xs text-rose-400 font-medium">{formError}</p>
+            <div className="bg-amber-500/5 border border-amber-500/15 px-4 py-3 rounded-xl mb-5">
+              <p className="text-xs text-amber-400 font-medium">{formError}</p>
+              {error?.includes("verify your email") && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setResending(true);
+                    try {
+                      const res = await fetch("/api/auth/resend-verification", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: formData.email || sessionStorage.getItem("pending-email") }),
+                      });
+                      const data = await res.json();
+                      if (res.ok) setError("Verification email resent. Check your inbox.");
+                      else setError(data.error || "Failed to resend");
+                    } catch {
+                      setError("Failed to resend verification email");
+                    } finally {
+                      setResending(false);
+                    }
+                  }}
+                  disabled={resending}
+                  className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors cursor-pointer mt-2 block"
+                >
+                  {resending ? "Sending..." : "Resend verification email"}
+                </button>
+              )}
             </div>
           )}
 
-          {view === "login" && <LoginForm shared={shared} onSubmit={handleLogin} />}
+          {view === "login" && <LoginForm shared={shared} onSubmit={handleLogin} onForgotPassword={() => switchView("forgot")} />}
           {view === "register" && <RegisterForm shared={shared} onSubmit={handleRegister} />}
           {view === "forgot" && <ForgotPasswordForm shared={shared} onSubmit={handleForgotPassword} onBack={() => switchView("login")} />}
 
           {/* View switcher links */}
           {view === "login" && (
-            <div className="flex items-center justify-between mt-4 text-sm">
-              <button type="button" onClick={() => switchView("register")} className="font-medium text-blue-400 hover:text-blue-300 transition-colors cursor-pointer">Sign up</button>
-              <button type="button" onClick={() => switchView("forgot")} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer">Forgot password?</button>
+            <div className="text-center text-sm mt-6">
+              <span className="text-zinc-500">Don&apos;t have an account? </span>
+              <button type="button" onClick={() => switchView("register")} className="text-blue-500 hover:underline cursor-pointer">Sign up</button>
             </div>
           )}
           {view === "register" && (
-            <div className="text-center text-sm mt-4">
+            <div className="text-center text-sm mt-6">
               <span className="text-zinc-500">Already have an account? </span>
-              <button type="button" onClick={() => switchView("login")} className="font-medium text-blue-400 hover:text-blue-300 transition-colors cursor-pointer">Sign in</button>
+              <button type="button" onClick={() => switchView("login")} className="text-blue-500 hover:underline cursor-pointer">Sign in</button>
             </div>
           )}
         </div>
