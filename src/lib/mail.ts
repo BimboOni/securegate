@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const resend = new Resend(process.env.RESEND_API_KEY || '');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function generateVerificationToken(email: string) {
   const token = crypto.randomBytes(32).toString("hex");
