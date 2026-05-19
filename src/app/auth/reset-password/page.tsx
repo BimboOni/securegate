@@ -13,7 +13,6 @@ function ResetPasswordForm() {
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [fieldError, setFieldError] = useState("");
-  const [touched, setTouched] = useState(false);
 
   const validatePassword = (value: string): string => {
     if (!value) return "Password is required";
@@ -21,21 +20,13 @@ function ResetPasswordForm() {
     return "";
   };
 
-  const handleBlur = () => {
-    setTouched(true);
-    setFieldError(validatePassword(password));
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
-    if (touched) {
-      setFieldError(validatePassword(e.target.value));
-    }
+    if (fieldError) setFieldError(validatePassword(e.target.value));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched(true);
 
     if (!token) {
       setStatus("error");
@@ -77,6 +68,8 @@ function ResetPasswordForm() {
 
   return (
     <div className="bg-zinc-900/40 py-10 px-6 sm:px-12 border border-zinc-800/50 backdrop-blur-2xl rounded-2xl shadow-2xl">
+      <h2 className="text-[clamp(1.25rem,3vw,1.75rem)] font-semibold text-zinc-100 tracking-tight mb-8">Create new password</h2>
+
       {status === "success" ? (
         <div className="text-center py-4">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-500/10 mb-4 border border-blue-500/20">
@@ -101,11 +94,10 @@ function ResetPasswordForm() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                className={`appearance-none block w-full px-4 py-3 bg-zinc-950/90 text-zinc-100 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 sm:text-sm pr-12 ${
-                  fieldError ? "border-rose-500/40 focus:ring-rose-500/20" : "border-zinc-800 focus:ring-blue-600/50"
+                className={`appearance-none block w-full px-4 py-3.5 bg-zinc-950 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-500 text-sm pr-14 hover:border-blue-500/40 hover:duration-[400ms] ${
+                  fieldError ? "border-rose-500/40 focus:ring-rose-500/20" : "border-zinc-800 focus:ring-blue-500/40"
                 }`}
                 value={password}
-                onBlur={handleBlur}
                 onChange={handleChange}
               />
               <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
@@ -137,7 +129,7 @@ function ResetPasswordForm() {
             <button
               type="submit"
               disabled={status === "loading" || !token}
-              className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-500/5 text-sm bg-zinc-100 text-zinc-950 font-semibold hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 cursor-pointer active:scale-[0.98]"
+              className="w-full flex justify-center py-3.5 px-6 border border-transparent rounded-xl shadow-lg shadow-blue-500/5 text-sm bg-zinc-100 text-zinc-950 font-semibold hover:bg-blue-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 cursor-pointer active:scale-[0.98]"
             >
               {status === "loading" ? "Resetting password..." : "Set new password"}
             </button>
@@ -150,11 +142,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="w-full sm:max-w-md mx-auto">
-      <div className="mb-6">
-        <h2 className="text-center text-lg font-medium text-zinc-400">Create new password</h2>
-      </div>
-
+    <div className="w-full max-w-[clamp(16rem,38vw,24rem)] mx-auto">
       <Suspense fallback={<div className="text-center text-sm text-zinc-500 py-8">Loading form...</div>}>
         <ResetPasswordForm />
       </Suspense>

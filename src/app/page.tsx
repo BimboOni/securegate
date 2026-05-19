@@ -1,14 +1,17 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
     <div className="relative min-h-screen bg-zinc-950 flex flex-col justify-center items-center px-6 font-sans selection:bg-blue-500/30 selection:text-zinc-200 overflow-hidden">
       {/* Hero Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
+        <Image
           src="/images/hero-section-bg-image-2.jpeg"
           alt=""
-          className="w-full h-full object-cover opacity-70 mix-blend-screen"
+          fill
+          className="object-cover opacity-70 mix-blend-screen"
+          priority
         />
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/40 to-zinc-950/90" />
         <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/60 via-transparent to-zinc-950/60" />

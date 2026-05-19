@@ -11,7 +11,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/login", // Redirect unauthorized users to /login
+      signIn: "/auth", // Redirect unauthorized users to /auth
     },
   }
 );
