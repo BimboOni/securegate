@@ -254,7 +254,10 @@ function AuthContent() {
     try {
       const res = await signIn("credentials", { redirect: false, email: formData.email, password: formData.password });
       if (res?.error) {
-        const errorMap: Record<string, string> = { CredentialsSignin: "Invalid email or password. Please try again." };
+        const errorMap: Record<string, string> = {
+          CredentialsSignin: "Invalid email or password. Please try again.",
+          RateLimitExceeded: "Too many login attempts. Please try again later.",
+        };
         setError(errorMap[res.error] || "Authentication failed. Please check your credentials.");
       } else {
         await new Promise((r) => setTimeout(r, 500));
