@@ -59,7 +59,7 @@ export default function Home() {
 
         {/* Meta Footer */}
         <div className="flex items-center justify-center gap-4 text-xs text-zinc-600">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-zinc-900/60 border border-zinc-800/60 backdrop-blur-sm">
+          <span className="inline-flex items-center gap-2 text-xs text-zinc-500">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
             All Systems Operational
           </span>

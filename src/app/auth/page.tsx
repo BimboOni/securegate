@@ -250,20 +250,25 @@ function AuthContent() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setError("");
     if (!submitIfValid()) return;
+
+    const limitRes = await fetch("/api/auth/check-rate-limit", { method: "POST" });
+    if (limitRes.status === 429) {
+      setError("Too many login attempts. Please try again later.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await signIn("credentials", { redirect: false, email: formData.email, password: formData.password });
       if (res?.error) {
-        const errorMap: Record<string, string> = {
-          CredentialsSignin: "Invalid email or password. Please try again.",
-          RateLimitExceeded: "Too many login attempts. Please try again later.",
-        };
-        setError(errorMap[res.error] || "Authentication failed. Please check your credentials.");
+        setError("Invalid email or password. Please try again.");
       } else {
         await new Promise((r) => setTimeout(r, 500));
         router.push("/dashboard"); router.refresh();
       }
-    } catch { setError("An unexpected error occurred");
+    } catch (err) {
+      console.error("signIn error:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally { setLoading(false); }
   };
 
@@ -276,7 +281,9 @@ function AuthContent() {
       const data = await res.json();
       if (!res.ok) setError(data.error || "Failed to register");
       else router.push("/auth?registered=true");
-    } catch { setError("An unexpected error occurred");
+    } catch (err) {
+      console.error("register error:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally { setLoading(false); }
   };
 
@@ -291,7 +298,9 @@ function AuthContent() {
       const data = await res.json();
       if (!res.ok) { setForgotStatus("error"); setForgotMessage(data.error || "An error occurred"); }
       else { setForgotStatus("success"); setForgotMessage(data.message); }
-    } catch { setForgotStatus("error"); setForgotMessage("An unexpected error occurred"); }
+    } catch (err) {
+      console.error("forgot password error:", err);
+      setForgotStatus("error"); setForgotMessage("An unexpected error occurred"); }
   };
 
   const inputBaseClass = "appearance-none block w-full px-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-transparent text-sm transition-all duration-500 hover:border-blue-500/40 hover:duration-[400ms]";
